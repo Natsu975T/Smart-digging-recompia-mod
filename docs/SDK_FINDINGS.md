@@ -46,6 +46,18 @@ The internal file `runtime/games/pkp/input/pkp_aim.cpp` documents how Recompia's
 
 The mouse-mode implementation documents a player-side hit-cell field and a validity flag. Recompia's v0.17 game layout also names the local character's world-position vector at `character + 0x20c0` and its current action component at `character + 0x18b8` (the running action ID is at action component `+0x984`). The game derives its feet row as `floor((position.y + 0.2) / 100)` and its X/Z cell coordinates from 100-unit grid spacing with a -102400 world origin. These are private, build-specific layouts, not stable Modtopia SDK interfaces; the exact 2.0.1 build ID must be checked before relying on them. They must be validated against the exact target build before use.
 
+## Additional native Rock Smash lifecycle evidence
+
+A second pass through Recompia v0.17.0's `runtime/games/pkp/input/pkp_aim.cpp` confirms useful boundaries, but not yet a callable break routine:
+
+- The five command-less swing actions are IDs **881–885** (Rock Smash, Cut and their upgrades). The exact ID-to-upgrade mapping still needs verification from the game's action data.
+- The native action begins at the StartAction mid-hook `main+0x27e5d8`; at that point the action ID is in `w28` and the action component is in `x19`. The action component's owner is at `+0x978`.
+- The live swing hit shape is built during the action at `main+0x6d9b40`; its heading is read at `main+0x6d9d70`, and the live shape position is handled at `main+0x6da610`. The preview is a separate path at `main+0x721e40`.
+- Recompia's camera-aim feature deliberately leaves the game's shape, validity, breaking and placing behaviour intact. This is evidence that the game performs the real hit evaluation downstream of the live swing shape; it is **not** proof that a third-party mod can safely invoke that path for arbitrary queued cells.
+- The action ID becoming zero or changing is used as an action-ended observation by camera-aim code. It may help detect a terminal action state, but must be validated for multi-hit Rock Smash, failure/bounce, interruption and cancellation before it is used as the excavation completion signal.
+
+Consequently, the next reverse-engineering target is the consumer of the live swing hit shape and the native action state machine after StartAction: identify where target blocks receive damage, how energy is charged, and which terminal state corresponds to a completed break. Do not invoke the action repeatedly or advance the queue based only on a guessed duration.
+
 ## Two blockers still open
 
 ### Strict inside-volume activation\n\nThe independent selection core now exposes `sd_region_contains_cell`, with tests for points inside and outside all six cuboid faces. This is only the geometry predicate: live character-position reading, conversion to the game's authoritative cell coordinates, and Rock Smash activation detection have not yet been integrated.\n\n### World preview
