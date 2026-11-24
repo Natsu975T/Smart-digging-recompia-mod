@@ -36,6 +36,8 @@ bool sd_selection_set_point_a(SdSelection *selection, SdCell cell);
 bool sd_selection_set_point_b(SdSelection *selection, SdCell cell);
 bool sd_selection_set_depth(SdSelection *selection, uint32_t depth);
 bool sd_selection_build_region(const SdSelection *selection, uint64_t max_blocks, SdRegion *out);
+/* Strict inclusive cell test: adjacent cells outside the cuboid are not inside. */
+bool sd_region_contains_cell(const SdRegion *region, SdCell cell);
 /* Stable iteration order: X fastest, then Z, then Y from top to bottom. */
 bool sd_region_cell_at(const SdRegion *region, uint64_t index, SdCell *out);
 /* Returns 0 when first_index is past the region; otherwise 1..4 cells. */
