@@ -67,4 +67,20 @@ A Modtopia code mod is a native shared library (for Linux, a .so) with an export
 
 ## Current status
 
+### Implemented and locally tested
+
+- `src/selection.c` and `src/selection.h`: independent two-point cuboid geometry.
+- Point A sets the top Y plane; point B supplies the opposite X/Z corner. Depth extends downward from A and is configurable from 1 to 256 cells.
+- Inclusive bounds and deterministic cell iteration (X fastest, then Z, then descending Y).
+- A caller-supplied maximum block count prevents oversized regions; invalid selections and integer underflow are rejected.
+- `tests/test_selection.c`: tests for incomplete selections, reversed corners, exact dimensions, iteration, depth, reset and limits.
+- Local build and test completed with CMake/Ninja/CTest: **1/1 tests passed**.
+- A GitHub Actions workflow was added to run the same tests on pushes and pull requests; its hosted run has not yet been confirmed.
+
+### Still blocked on game integration
+
 Research has confirmed the Modtopia architecture and SDK entry points. It has **not** yet established a safe block-break call or a third-party world-preview path. Those are the two main technical unknowns; no fake implementation or untested binary should be presented as a finished mod.
+
+### Compatibility note
+
+The exact Recompia release tag `v0.17.0` was inspected. Its bundled SDK header is API 0.7 and its Modtopia mapping file is labelled game `2.0.1` with build ID `76a489f3bd3642fa5e18bd83d32c98ba`. Some current game-layer source files describe layouts as `2.0.1a`; that source comment is not proof that the user's installed game is 2.0.1a. Before adding hard-coded game offsets, the runtime's actual game version/build ID must be checked. The implementation must not silently mix the 2.0.1 mapping with a different game build.
