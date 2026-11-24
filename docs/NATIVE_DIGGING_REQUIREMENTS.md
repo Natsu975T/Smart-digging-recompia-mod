@@ -4,9 +4,9 @@ This document records the user's explicit gameplay requirements. They override a
 
 ## Required behaviour
 
-Smart Digging is an automation/area-selection layer around Pokopia's **own excavation power**, not a faster or free block deletion tool.
+Smart Digging is an automation/area-selection layer around Pokopia's **native Rock Smash power**, not a faster or free block deletion tool.
 
-For every cell in the selected cuboid, the mod must cause the game to perform the same native excavation action that the player would perform manually, with the following consequences:
+For each eligible cell in the selected cuboid, Smart Digging must cause the game to perform the same native **Rock Smash** action that the player would perform manually, with the following consequences:
 
 1. **Energy/hunger cost:** the native power's energy/hunger meter is charged exactly as in ordinary gameplay. No direct world edits, free breaks, meter bypass, or synthetic refund.
 2. **Native eligibility:** a cell can only be affected if the currently unlocked excavation power can break that block under the current game progression. The mod must not bypass material restrictions, upgrade tiers, quest gates, or tool requirements.
@@ -28,7 +28,7 @@ For every cell in the selected cuboid, the mod must cause the game to perform th
 
 Recompia v0.17.0's `runtime/games/pkp/input/pkp_aim.cpp` documents that actions 881–885 are command-less swing tools (Rock Smash, Cut and their upgrades). The game constructs their preview and live hit shapes in separate native paths; Recompia's camera-aim hooks alter the heading while leaving the game's shape, validity, breaking and placing logic intact.
 
-This is a useful example of the correct integration principle: modify/drive the native action path and let the game own its hit logic. It is **not yet proof** that 881–885 are the exact excavation power action IDs or that invoking them directly from a third-party mod is safe.
+The user has clarified that Rock Smash is exactly the power intended. Implementation must trace and reuse the native Rock Smash execution path, including its upgraded variants, rather than a generic block-set function. The exact entry point, state prerequisites, completion signal, energy debit and drop side effects still need to be established before invoking it from a third-party mod.
 
 The game command target query at `main+0x2e19a0` is used by command-based abilities/tools. The generic world set-block routine noted at `main+0x137e20` must not be used as the excavation implementation.
 
