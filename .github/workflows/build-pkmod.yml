@@ -20,13 +20,15 @@ jobs:
         run: cmake -S . -B build-mod -G Ninja -DCMAKE_BUILD_TYPE=Release -DMODTOPIA_SDK_DIR="$GITHUB_WORKSPACE/deps/Recompia/runtime/third_party/modtopia/sdk/include"
       - name: Build
         run: cmake --build build-mod --verbose
+      - name: Test selection geometry
+        run: ctest --test-dir build-mod --output-on-failure
       - name: Assemble .pkmod
         run: |
           mkdir -p dist/smart_digging/bin/linux-x64
           cp build-mod/smart_digging.so dist/smart_digging/bin/linux-x64/mod.so
           cp mod.toml dist/smart_digging/mod.toml
-          cd dist
-          zip -r smart-digging-linux-x64.pkmod smart_digging
+          cd dist/smart_digging
+          zip -r ../smart-digging-linux-x64.pkmod .
       - uses: actions/upload-artifact@v4
         with:
           name: smart-digging-linux-x64
