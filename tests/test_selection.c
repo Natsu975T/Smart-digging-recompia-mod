@@ -33,6 +33,28 @@ static void test_two_point_cuboid_and_iteration(void) {
     assert(!sd_region_cell_at(&r, 27, &c));
 }
 
+static void test_position_must_be_inside_volume(void) {
+    SdSelection s;
+    SdRegion r;
+    sd_selection_reset(&s);
+    assert(sd_selection_set_point_a(&s, (SdCell){2, 8, 4}));
+    assert(sd_selection_set_point_b(&s, (SdCell){4, 0, 6}));
+    assert(sd_selection_set_depth(&s, 3));
+    assert(sd_selection_build_region(&s, 100, &r));
+
+    assert(sd_region_contains_cell(&r, (SdCell){2, 8, 4}));
+    assert(sd_region_contains_cell(&r, (SdCell){4, 6, 6}));
+    assert(sd_region_contains_cell(&r, (SdCell){3, 7, 5}));
+
+    assert(!sd_region_contains_cell(&r, (SdCell){1, 7, 5}));
+    assert(!sd_region_contains_cell(&r, (SdCell){5, 7, 5}));
+    assert(!sd_region_contains_cell(&r, (SdCell){3, 9, 5}));
+    assert(!sd_region_contains_cell(&r, (SdCell){3, 5, 5}));
+    assert(!sd_region_contains_cell(&r, (SdCell){3, 7, 3}));
+    assert(!sd_region_contains_cell(&r, (SdCell){3, 7, 7}));
+    assert(!sd_region_contains_cell(NULL, (SdCell){3, 7, 5}));
+}
+
 static void test_rock_smash_batches_max_four(void) {
     SdSelection s;
     SdRegion r;
@@ -92,6 +114,7 @@ static void test_limits_and_overflow(void) {
 int main(void) {
     test_requires_two_points();
     test_two_point_cuboid_and_iteration();
+    test_position_must_be_inside_volume();
     test_rock_smash_batches_max_four();
     test_depth_and_reset();
     test_limits_and_overflow();
