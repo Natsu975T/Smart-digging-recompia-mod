@@ -1,33 +1,50 @@
 # Smart Digging for Recompia
 
-Work-in-progress Modtopia code mod for Recompia / Pokopia.
+Work-in-progress native Modtopia code mod for Recompia / Pokopia.
 
-The goal is a native in-game excavation tool: select two opposite block corners, preview the cuboid, set an independent depth, then confirm or cancel the excavation.
+The intended final tool is an in-game excavation tool: select two opposite block corners (WorldEdit-style), set independent depth, preview the cuboid, then confirm or cancel.
 
-## Planned interaction
+## Current native prototype
 
-1. Activate Smart Digging with a configurable key.
-2. Select corner A and corner B by targeting two blocks (WorldEdit-style two-point selection).
-3. Adjust excavation depth independently of the horizontal footprint.
-4. Show a preview of the selected volume.
-5. Confirm to excavate, or cancel/reselect either corner.
+The repository now contains the first native integration in `src/mod.cpp`:
 
-The excavation must use the game's own block/tool logic. It must not simulate external keyboard or mouse presses.
+- Modtopia C ABI entry point and `FrameStart` event subscription.
+- Strict compatibility gate for Recompia v0.17.0's bundled Pokopia 2.0.1 mapping build ID `76a489f3bd3642fa5e18bd83d32c98ba`.
+- Configurable F6/F7/F8/F9/F10 controls.
+- Read-only acquisition of the game's current pointer hit cell, when Pokopia's own mouse mode is active.
+- Read-only block-ID query to reject empty cells.
+- Two-point cuboid geometry with configurable depth and a 4096-cell safety cap.
+
+**This is a selection prototype, not the finished excavation mod.** F10 only validates the selected region. It deliberately does not break blocks. A verified general-purpose native break path and a third-party world-preview path are still outstanding.
+
+## Controls
+
+| Key | Action |
+|---|---|
+| F6 | Enable/disable Smart Digging |
+| F7 | Capture point A |
+| F8 | Capture point B |
+| F9 | Clear selection |
+| F10 | Validate selection (no excavation) |
+
+The keys and depth can be changed in Modtopia's in-game mod settings. Point capture currently requires Pokopia's native pointer/mouse mode to be active and aimed at a solid block.
 
 ## Compatibility
 
-- Recompia: 0.17 (requested target; exact runtime/API compatibility still to be checked).
-- Game update: 2.0.1 (the requested target; mapping/build-ID compatibility must be verified before release).
-- Platform: Linux x86-64 is the first build target.
+- Recompia source release: `v0.17.0`
+- Modtopia SDK: API 0.7
+- Pokopia mapping: 2.0.1
+- Required build ID: `76a489f3bd3642fa5e18bd83d32c98ba`
+- First build target: Linux x86-64
 
-## Status
+## Build
 
-**Milestone 1 implemented: the independent two-point cuboid geometry engine is committed and passes local CTest. No installable package has been released yet.**
+GitHub Actions builds the native library against the SDK bundled in the pinned Recompia release and packages a root-layout `.pkmod` artifact. See the Actions tab for the build result.
 
-Recompia includes the Modtopia code-mod loader and SDK. A code mod is a native shared library packaged with a mod.toml manifest as a .pkmod package. It is distinct from a simple RomFS replacement mod.
+## Research and implementation notes
 
-See docs/TECHNICAL_PLAN.md and docs/SDK_FINDINGS.md for the implementation findings and remaining reverse-engineering work. The selection geometry is in `src/selection.c`; its tests are in `tests/test_selection.c`.
+- [Technical plan](docs/TECHNICAL_PLAN.md)
+- [SDK and reverse-engineering findings](docs/SDK_FINDINGS.md)
+- [Native prototype details and limitations](docs/NATIVE_PROTOTYPE.md)
 
-## Safety
-
-The tool must never execute a destructive operation before explicit confirmation. The preview and selection state must be cleared on cancel, scene change, save/load transition, or invalid target.
+The excavation must eventually use the game's own authoritative block/tool behaviour. External keyboard/mouse automation is out of scope. No destructive operation is enabled until its ABI and side effects are verified.
