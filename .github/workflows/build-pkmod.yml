@@ -1,0 +1,39 @@
+name: build-pkmod
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  linux-x64:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install build tools
+        run: sudo apt-get update && sudo apt-get install -y cmake ninja-build g++
+      - name: Fetch the exact Recompia 0.17 SDK
+        run: git clone --depth 1 --branch v0.17.0 https://github.com/Dittobyte/Recompia.git deps/Recompia
+      - name: Configure
+        run: cmake -S . -B build-mod -G Ninja -DCMAKE_BUILD_TYPE=Release -DMODTOPIA_SDK_DIR="$GITHUB_WORKSPACE/deps/Recompia/runtime/third_party/modtopia/sdk/include"
+      - name: Build
+        run: cmake --build build-mod --verbose
+      - name: Assemble .pkmod
+        run: |
+          mkdir -p dist/smart_digging/bin/linux-x64
+          cp build-mod/smart_digging.so dist/smart_digging/bin/linux-x64/mod.so
+          cp mod.toml dist/smart_digging/mod.toml
+          cd dist
+          zip -r smart-digging-linux-x64.pkmod smart_digging
+      - uses: actions/upload-artifact@v4
+        with:
+          name: smart-digging-linux-x64
+          path: dist/smart-digging-linux-x64.pkmod
+          if-no-files-found: error
+      - name: Publish tagged release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/smart-digging-linux-x64.pkmod
