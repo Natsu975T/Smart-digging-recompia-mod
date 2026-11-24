@@ -13,14 +13,15 @@ For each eligible cell in the selected cuboid, Smart Digging must cause the game
 3. **Progression scaling:** the mod must use the currently equipped/unlocked power level and its native capability. If later upgrades allow harder blocks, Smart Digging inherits that capability automatically; it must not maintain a separate hard-coded material whitelist that can become stale.
 4. **Native drops:** every block's drops, quantities, random rolls, collection/overflow behaviour and any associated world/save/quest effects must be exactly those produced by the base game.
 5. **Native timing and state:** execute on the game thread and respect the native action's animation, cooldown, energy checks, hit shape, and failure path. Do not enqueue a whole cuboid as instantaneous world writes.
+6. **Four-block batch ceiling:** process the excavation in batches of at most four blocks, matching the maximum area handled by the base game's Rock Smash behaviour. Never submit more than four candidate blocks in one native Rock Smash cycle. A final partial batch may contain one to three blocks. If the native game action itself can only process fewer targets in a given context, obey that lower native limit.
 6. **Safe cancellation:** stopping the operation must prevent further native actions. Already completed breaks remain exactly as they would in normal gameplay.
 
 ## Required architecture
 
 - Treat the cuboid as a queue of candidate cells, not as permission to destroy them.
-- For each candidate, ask the game's own native targeting/ability path to validate the target and invoke the same action entry path used by the player's excavation power.
+- Partition candidate cells into deterministic batches of at most four. For each batch, ask the game's own native targeting/ability path to validate targets and invoke the same action entry path used by the player's Rock Smash power. Never exceed four targets per cycle.
 - Let the game itself decide whether the current ability can break the target. A rejected/too-hard target must remain unchanged and must not produce drops.
-- Advance only after the native action has completed and its result is observable. Respect the normal energy meter and action cooldown.
+- Advance to the next batch only after the current native action has completed and its results are observable. Respect the normal energy meter and action cooldown; the batch size is a hard maximum, not a way to skip native per-block checks.
 - Never call a generic world set-block function to emulate breaking. It risks bypassing energy, tool progression, drops, quest hooks and save bookkeeping.
 - Preserve multiplayer authority rules; do not locally fake host-side changes.
 
