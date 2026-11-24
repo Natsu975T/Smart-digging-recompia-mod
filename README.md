@@ -2,7 +2,7 @@
 
 Work-in-progress native Modtopia code mod for Recompia / Pokopia.
 
-The intended final tool is an in-game excavation tool: select two opposite block corners (WorldEdit-style), set independent depth, preview the cuboid, then let the game's own excavation power process the selected volume.
+The intended final tool is an in-game excavation tool: select two opposite block corners (WorldEdit-style), set independent depth, preview the cuboid, then let the game's own Rock Smash power process the selected volume in batches of at most four blocks (the base game's maximum).
 
 ## Current native prototype
 
@@ -35,4 +35,4 @@ GitHub Actions builds the native library against the SDK bundled in the pinned R
 - [Native prototype details and limitations](docs/NATIVE_PROTOTYPE.md)
 - [Native excavation requirements](docs/NATIVE_DIGGING_REQUIREMENTS.md)
 
-The excavation must use the game's own authoritative block/tool behaviour, including its energy cost, progression checks and drops. External keyboard/mouse automation is out of scope. No destructive operation is enabled until its ABI and side effects are verified.
+The excavation must use the game's own authoritative block/tool behaviour, including its energy cost, progression checks and drops. Each native Rock Smash cycle is capped at four blocks, with smaller final batches as needed. External keyboard/mouse automation is out of scope. No destructive operation is enabled until its ABI and side effects are verified.
