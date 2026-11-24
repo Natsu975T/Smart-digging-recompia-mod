@@ -175,3 +175,25 @@ int on_frame(MtMod*, const MtEvent*, void* user) {
     }
     return MT_EVENT_CONTINUE;
 }
+} // namespace
+
+MT_DECLARE_MOD()
+MT_EXTERN_C MT_EXPORT int mod_init(const MtHost* host, MtMod* mod) {
+    if (!host || !mod || host->api_version < MT_API_VERSION ||
+        !host->game_version || std::strcmp(host->game_version, "2.0.1") != 0 ||
+        !host->game_build_id ||
+        std::strcmp(host->game_build_id, "76a489f3bd3642fa5e18bd83d32c98ba") != 0) {
+        return MT_ERR_VERSION;
+    }
+    g.host = host;
+    g.mod = mod;
+    sd_selection_reset(&g.selection);
+    if (!host->subscribe || host->subscribe(mod, "FrameStart", MT_PRIORITY_NORMAL, &on_frame, &g) != MT_OK)
+        return MT_ERR;
+    mt_logf(host, mod, MT_LOG_INFO,
+            "Smart Digging prototype loaded (Modtopia API %u.%u, Recompia game %s).",
+            host->api_version >> 16, host->api_version & 0xffff, host->game_version);
+    if (MT_HOST_HAS(host, notify) && host->notify)
+        host->notify(mod, "Smart Digging caricato. F6 attiva/disattiva.", 4.0);
+    return MT_OK;
+}
