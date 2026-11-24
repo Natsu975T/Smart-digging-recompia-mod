@@ -66,6 +66,13 @@ bool sd_selection_build_region(const SdSelection *selection, uint64_t max_blocks
     return true;
 }
 
+bool sd_region_contains_cell(const SdRegion *region, SdCell cell) {
+    return region && region->block_count != 0 &&
+           cell.x >= region->min_x && cell.x <= region->max_x &&
+           cell.y >= region->min_y && cell.y <= region->top_y &&
+           cell.z >= region->min_z && cell.z <= region->max_z;
+}
+
 bool sd_region_cell_at(const SdRegion *region, uint64_t index, SdCell *out) {
     if (!region || !out || region->block_count == 0 || index >= region->block_count) return false;
     const uint64_t width = span_i32(region->min_x, region->max_x);
@@ -84,7 +91,6 @@ bool sd_region_cell_at(const SdRegion *region, uint64_t index, SdCell *out) {
     out->z = (int32_t)z;
     return true;
 }
-
 
 uint32_t sd_region_batch_size(const SdRegion *region, uint64_t first_index) {
     if (!region || first_index >= region->block_count) return 0;
