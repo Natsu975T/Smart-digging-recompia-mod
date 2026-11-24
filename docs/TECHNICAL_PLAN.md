@@ -56,7 +56,7 @@ A Modtopia code mod is a native shared library (for Linux, a .so) with an export
 ### Phase 4 — excavation
 - Identify the game's authoritative block-break path.
 - Invoke it on the correct game thread and preserve the game's normal checks, drops, durability and save behaviour.
-- Process a bounded number of cells per frame; stop safely on scene changes, invalid memory, or errors.
+- Process candidate cells in batches of at most four blocks per native Rock Smash cycle, matching the base game's maximum area. Wait for the cycle to complete and its results to be observable before starting the next batch; stop safely on scene changes, invalid memory, or errors.
 - Never begin until the player confirms.
 
 ### Phase 5 — package and validation
