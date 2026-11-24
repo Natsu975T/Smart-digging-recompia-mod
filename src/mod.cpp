@@ -108,7 +108,7 @@ void report_selection() {
 
 int on_frame(MtMod*, const MtEvent*, void* user) {
     auto* s = static_cast<State*>(user);
-    if (!s || !s->host || !s->host->config_string || !s->host->key_down) return MT_EVENT_CONTINUE;
+    if (!s || !s->host || !s->host->config_string || !s->host->key_down || !s->host->config_number) return MT_EVENT_CONTINUE;
 
     if (pressed("toggle_key", s->prev_toggle)) {
         s->enabled = !s->enabled;
@@ -117,6 +117,13 @@ int on_frame(MtMod*, const MtEvent*, void* user) {
             : "Smart Digging disattivato.");
     }
     if (!s->enabled) return MT_EVENT_CONTINUE;
+
+    if (s->selection.has_point_a) {
+        const double configured_depth = s->host->config_number(s->mod, "depth");
+        const auto depth = static_cast<uint32_t>(configured_depth);
+        if (configured_depth >= 1.0 && configured_depth <= 256.0)
+            sd_selection_set_depth(&s->selection, depth);
+    }
 
     if (pressed("point_a_key", s->prev_a)) {
         SdCell cell{};
