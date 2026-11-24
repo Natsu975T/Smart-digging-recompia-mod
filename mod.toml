@@ -1,0 +1,48 @@
+id = "smart_digging"
+name = "Smart Digging"
+version = "0.1.0"
+authors = ["Natsu975T"]
+description = "WorldEdit-style two-point excavation selection prototype for Recompia."
+license = "MIT"
+loader = ">=0.2.0 <1.0.0"
+game = ["2.0.1"]
+affects = "gameplay"
+
+[[settings]]
+key = "toggle_key"
+type = "key"
+default = "F6"
+label = "Attiva/disattiva Smart Digging"
+
+[[settings]]
+key = "point_a_key"
+type = "key"
+default = "F7"
+label = "Seleziona punto A"
+
+[[settings]]
+key = "point_b_key"
+type = "key"
+default = "F8"
+label = "Seleziona punto B"
+
+[[settings]]
+key = "reset_key"
+type = "key"
+default = "F9"
+label = "Azzera selezione"
+
+[[settings]]
+key = "confirm_key"
+type = "key"
+default = "F10"
+label = "Conferma (solo verifica)"
+
+[[settings]]
+key = "depth"
+type = "number"
+min = 1
+max = 256
+step = 1
+default = 5
+label = "Profondita' di scavo"
