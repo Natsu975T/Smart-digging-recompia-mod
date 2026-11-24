@@ -21,10 +21,7 @@ struct State {
     SdSelection selection{};
     bool enabled = false;
     bool prev_toggle = false;
-    bool prev_a = false;
-    bool prev_b = false;
-    bool prev_reset = false;
-    bool prev_confirm = false;
+    bool prev_right_click = false;
 };
 
 State g;
@@ -81,6 +78,32 @@ bool current_target(SdCell& cell) {
     return true;
 }
 
+bool mouse_mode_active() {
+    const uint64_t base = g.host->module_base("main");
+    uint64_t manager = 0, player = 0;
+    uint8_t enabled = 0;
+    return base && read_value(base + kPlayerManager, manager) && manager &&
+           read_value(manager + kManagerPlayer, player) && player &&
+           read_value(player + kMouseModeOn, enabled) && enabled != 0;
+}
+
+bool right_click_pressed() {
+    if (!MT_HOST_HAS(g.host, pad_read) || !g.host->pad_read) return false;
+    MtPad pad{};
+    if (g.host->pad_read(g.mod, 0, &pad) != MT_OK) return false;
+    const bool down = (pad.buttons & MT_PAD_R) != 0;
+    const bool edge = down && !g.prev_right_click;
+    g.prev_right_click = down;
+    return edge;
+}
+
+void block_selection_click(bool block) {
+    if (!MT_HOST_HAS(g.host, pad_block) || !g.host->pad_block) return;
+    MtPad mask{};
+    if (block) mask.buttons = MT_PAD_R;
+    g.host->pad_block(g.mod, 0, block ? &mask : nullptr);
+}
+
 void report_selection() {
     if (!g.selection.has_point_a) {
         notify("Smart Digging: nessun punto selezionato.");
@@ -112,9 +135,12 @@ int on_frame(MtMod*, const MtEvent*, void* user) {
 
     if (pressed("toggle_key", s->prev_toggle)) {
         s->enabled = !s->enabled;
+        sd_selection_reset(&s->selection);
+        s->prev_right_click = false;
+        block_selection_click(false);
         notify(s->enabled
-            ? "Smart Digging attivo. Usa la modalita' mouse di Pokopia per puntare i blocchi."
-            : "Smart Digging disattivato.");
+            ? "Smart Digging attivo: clic destro per selezionare il punto A e poi il punto B."
+            : "Smart Digging disattivato: selezione azzerata.");
     }
     if (!s->enabled) return MT_EVENT_CONTINUE;
 
@@ -125,54 +151,27 @@ int on_frame(MtMod*, const MtEvent*, void* user) {
             sd_selection_set_depth(&s->selection, depth);
     }
 
-    if (pressed("point_a_key", s->prev_a)) {
+    const bool mouse_mode = mouse_mode_active();
+    block_selection_click(mouse_mode);
+    if (!mouse_mode) {
+        s->prev_right_click = false;
+        return MT_EVENT_CONTINUE;
+    }
+
+    if (right_click_pressed()) {
         SdCell cell{};
-        if (!current_target(cell)) notify("Punto A non acquisito: attiva la modalita' mouse e punta un blocco valido.");
-        else {
+        if (!current_target(cell)) {
+            notify("Nessun blocco valido sotto il puntatore.");
+        } else if (!s->selection.has_point_a || s->selection.has_point_b) {
             sd_selection_set_point_a(&s->selection, cell);
-            const auto depth = static_cast<uint32_t>(s->host->config_number(s->mod, "depth"));
-            sd_selection_set_depth(&s->selection, depth >= 1 && depth <= 256 ? depth : 1);
+            s->selection.has_point_b = false;
+            report_selection();
+        } else if (!sd_selection_set_point_b(&s->selection, cell)) {
+            notify("Punto B non valido.");
+        } else {
+            // Validate the complete volume immediately after the second click.
             report_selection();
         }
     }
-    if (pressed("point_b_key", s->prev_b)) {
-        SdCell cell{};
-        if (!current_target(cell)) notify("Punto B non acquisito: attiva la modalita' mouse e punta un blocco valido.");
-        else if (!sd_selection_set_point_b(&s->selection, cell)) notify("Seleziona prima il punto A.");
-        else report_selection();
-    }
-    if (pressed("reset_key", s->prev_reset)) {
-        sd_selection_reset(&s->selection);
-        notify("Smart Digging: selezione azzerata.");
-    }
-    if (pressed("confirm_key", s->prev_confirm)) {
-        SdRegion region{};
-        if (!sd_selection_build_region(&s->selection, kMaxBlocks, &region))
-            notify("Smart Digging: selezione incompleta o non valida.");
-        else
-            notify("Selezione valida. Scavo disabilitato: la chiamata nativa di rottura non e' ancora verificata.");
-    }
     return MT_EVENT_CONTINUE;
-}
-} // namespace
-
-MT_DECLARE_MOD()
-MT_EXTERN_C MT_EXPORT int mod_init(const MtHost* host, MtMod* mod) {
-    if (!host || !mod || host->api_version < MT_API_VERSION ||
-        !host->game_version || std::strcmp(host->game_version, "2.0.1") != 0 ||
-        !host->game_build_id ||
-        std::strcmp(host->game_build_id, "76a489f3bd3642fa5e18bd83d32c98ba") != 0) {
-        return MT_ERR_VERSION;
-    }
-    g.host = host;
-    g.mod = mod;
-    sd_selection_reset(&g.selection);
-    if (!host->subscribe || host->subscribe(mod, "FrameStart", MT_PRIORITY_NORMAL, &on_frame, &g) != MT_OK)
-        return MT_ERR;
-    mt_logf(host, mod, MT_LOG_INFO,
-            "Smart Digging prototype loaded (Modtopia API %u.%u, Recompia game %s).",
-            host->api_version >> 16, host->api_version & 0xffff, host->game_version);
-    if (MT_HOST_HAS(host, notify) && host->notify)
-        host->notify(mod, "Smart Digging caricato. F6 attiva/disattiva.", 4.0);
-    return MT_OK;
 }
