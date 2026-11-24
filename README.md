@@ -22,11 +22,11 @@ The excavation must use the game's own block/tool logic. It must not simulate ex
 
 ## Status
 
-**Research / implementation in progress. No installable package has been released yet.**
+**Milestone 1 implemented: the independent two-point cuboid geometry engine is committed and passes local CTest. No installable package has been released yet.**
 
 Recompia includes the Modtopia code-mod loader and SDK. A code mod is a native shared library packaged with a mod.toml manifest as a .pkmod package. It is distinct from a simple RomFS replacement mod.
 
-See docs/TECHNICAL_PLAN.md for the implementation findings and remaining reverse-engineering work.
+See docs/TECHNICAL_PLAN.md and docs/SDK_FINDINGS.md for the implementation findings and remaining reverse-engineering work. The selection geometry is in `src/selection.c`; its tests are in `tests/test_selection.c`.
 
 ## Safety
 
