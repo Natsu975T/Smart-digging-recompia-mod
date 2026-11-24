@@ -33,6 +33,34 @@ static void test_two_point_cuboid_and_iteration(void) {
     assert(!sd_region_cell_at(&r, 27, &c));
 }
 
+static void test_rock_smash_batches_max_four(void) {
+    SdSelection s;
+    SdRegion r;
+    SdCell batch[SD_ROCK_SMASH_BATCH_MAX];
+
+    sd_selection_reset(&s);
+    assert(sd_selection_set_point_a(&s, (SdCell){0, 10, 0}));
+    assert(sd_selection_set_point_b(&s, (SdCell){4, 10, 0}));
+    assert(sd_selection_set_depth(&s, 2));
+    assert(sd_selection_build_region(&s, 100, &r));
+    assert(r.block_count == 10);
+
+    assert(sd_region_batch_size(&r, 0) == 4);
+    assert(sd_region_batch_size(&r, 4) == 4);
+    assert(sd_region_batch_size(&r, 8) == 2);
+    assert(sd_region_batch_size(&r, 10) == 0);
+    assert(sd_region_batch_size(&r, 100) == 0);
+
+    assert(sd_region_batch_at(&r, 0, batch) == 4);
+    assert(batch[0].x == 0 && batch[3].x == 3);
+    assert(sd_region_batch_at(&r, 4, batch) == 4);
+    assert(batch[0].x == 4 && batch[3].y == 9);
+    assert(sd_region_batch_at(&r, 8, batch) == 2);
+    assert(batch[0].x == 3 && batch[0].y == 9);
+    assert(batch[1].x == 4 && batch[1].y == 9);
+    assert(sd_region_batch_at(&r, 10, batch) == 0);
+}
+
 static void test_depth_and_reset(void) {
     SdSelection s;
     SdRegion r;
@@ -64,6 +92,7 @@ static void test_limits_and_overflow(void) {
 int main(void) {
     test_requires_two_points();
     test_two_point_cuboid_and_iteration();
+    test_rock_smash_batches_max_four();
     test_depth_and_reset();
     test_limits_and_overflow();
     puts("selection tests: ok");
