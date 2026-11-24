@@ -84,3 +84,20 @@ bool sd_region_cell_at(const SdRegion *region, uint64_t index, SdCell *out) {
     out->z = (int32_t)z;
     return true;
 }
+
+
+uint32_t sd_region_batch_size(const SdRegion *region, uint64_t first_index) {
+    if (!region || first_index >= region->block_count) return 0;
+    const uint64_t remaining = region->block_count - first_index;
+    return (uint32_t)(remaining < SD_ROCK_SMASH_BATCH_MAX ? remaining : SD_ROCK_SMASH_BATCH_MAX);
+}
+
+uint32_t sd_region_batch_at(const SdRegion *region, uint64_t first_index,
+                            SdCell out[SD_ROCK_SMASH_BATCH_MAX]) {
+    if (!out) return 0;
+    const uint32_t count = sd_region_batch_size(region, first_index);
+    for (uint32_t i = 0; i < count; ++i) {
+        if (!sd_region_cell_at(region, first_index + i, &out[i])) return 0;
+    }
+    return count;
+}
