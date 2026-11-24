@@ -44,11 +44,11 @@ The internal file `runtime/games/pkp/input/pkp_aim.cpp` documents how Recompia's
 - The row helper reads the active camera pitch and the world collision metadata.
 - The built-in feature keeps the game's own highlighted shapes, validity checks, damage, breaking and placing behaviour.
 
-The mouse-mode implementation documents a player-side hit-cell field and a validity flag. These are useful reverse-engineering leads, but they are private game layouts, not stable Modtopia SDK interfaces. They must be validated against the exact target build before use.
+The mouse-mode implementation documents a player-side hit-cell field and a validity flag. Recompia's v0.17 game layout also names the local character's world-position vector at `character + 0x20c0` and its current action component at `character + 0x18b8` (the running action ID is at action component `+0x984`). The game derives its feet row as `floor((position.y + 0.2) / 100)` and its X/Z cell coordinates from 100-unit grid spacing with a -102400 world origin. These are private, build-specific layouts, not stable Modtopia SDK interfaces; the exact 2.0.1 build ID must be checked before relying on them. They must be validated against the exact target build before use.
 
 ## Two blockers still open
 
-### World preview
+### Strict inside-volume activation\n\nThe independent selection core now exposes `sd_region_contains_cell`, with tests for points inside and outside all six cuboid faces. This is only the geometry predicate: live character-position reading, conversion to the game's authoritative cell coordinates, and Rock Smash activation detection have not yet been integrated.\n\n### World preview
 
 The inspected Modtopia SDK does not expose a general-purpose world-overlay drawing API. It has notifications and screenshot support. Recompia's `OverlayCanvas` is used by built-in features, but is not part of the third-party `MtHost` table. A genuine cuboid preview therefore needs either a verified native in-game marker mechanism or a minimal host-side extension. A text notification is not an acceptable substitute for the requested 3D preview.
 
